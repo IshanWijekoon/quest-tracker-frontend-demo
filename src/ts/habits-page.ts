@@ -3,6 +3,7 @@ import {
   addHabit,
   calculateStats,
   clearMonthHabits,
+  createFreshStartHabitsData,
   formatDateKey,
   formatMonthKey,
   getCellState,
@@ -35,6 +36,7 @@ const addHabitBtn = document.getElementById("addHabitBtn") as HTMLButtonElement 
 const copyHabitsBtn = document.getElementById("copyHabitsBtn") as HTMLButtonElement | null;
 const pasteHabitsBtn = document.getElementById("pasteHabitsBtn") as HTMLButtonElement | null;
 const deleteAllHabitsBtn = document.getElementById("deleteAllHabitsBtn") as HTMLButtonElement | null;
+const freshStartBtn = document.getElementById("freshStartBtn") as HTMLButtonElement | null;
 const clipboardStatus = document.getElementById("clipboardStatus");
 const newHabitInput = document.getElementById("newHabitInput") as HTMLInputElement | null;
 const prevMonthBtn = document.getElementById("prevMonthBtn");
@@ -758,6 +760,23 @@ function handleDeleteAllHabitsConfirm(): void {
   setDeleteMonthModalOpen(false);
 }
 
+function handleFreshStart(): void {
+  const confirmed = window.confirm(
+    "This will delete every quest, all progress, side quests, milestones, and copied quest data. Start fresh?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  data = createFreshStartHabitsData(data);
+  currentView = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  localStorage.removeItem(CLIPBOARD_STORAGE_KEY);
+  saveHabitsData(data);
+  updateClipboardUi("Fresh start ready");
+  render();
+}
+
 habitGrid?.addEventListener("click", handleGridClick);
 
 habitGrid?.addEventListener("contextmenu", (event: Event) => {
@@ -794,6 +813,7 @@ manMilestoneList?.addEventListener("click", handleAnalyticsListClick);
 copyHabitsBtn?.addEventListener("click", handleCopyHabits);
 pasteHabitsBtn?.addEventListener("click", handlePasteHabits);
 deleteAllHabitsBtn?.addEventListener("click", handleDeleteAllHabitsClick);
+freshStartBtn?.addEventListener("click", handleFreshStart);
 cancelDeleteMonthBtn?.addEventListener("click", () => setDeleteMonthModalOpen(false));
 confirmDeleteMonthBtn?.addEventListener("click", handleDeleteAllHabitsConfirm);
 deleteMonthModal?.addEventListener("click", (event) => {

@@ -5,12 +5,6 @@ const LEGACY_V2_KEY = "humanos_habits_v2";
 const LEGACY_V1_KEY = "humanos_habits";
 const MAX_HABITS = 10;
 
-const DEFAULT_HABITS: Habit[] = [
-  { id: "habit-exercise", name: "Exercise", color: "#f9d66d" },
-  { id: "habit-coding", name: "Coding", color: "#6db6ff" },
-  { id: "habit-reading", name: "Reading", color: "#8ee48e" }
-];
-
 const HABIT_COLORS = [
   "#f9d66d",
   "#6db6ff",
@@ -43,8 +37,54 @@ export function formatMonthKey(year: number, monthIndex: number): string {
 
 function getDefaultMonthData(): MonthData {
   return {
-    habits: [...DEFAULT_HABITS],
+    habits: [],
     log: {}
+  };
+}
+
+function createDefaultHabitsData(): HabitsData {
+  const now = new Date();
+  const currentKey = formatMonthKey(now.getFullYear(), now.getMonth());
+
+  return {
+    months: {
+      [currentKey]: getDefaultMonthData()
+    },
+    sideQuests: [],
+    manMilestones: []
+  };
+}
+
+export function createFreshStartHabitsData(existingData?: HabitsData): HabitsData {
+  if (existingData && existingData.months && typeof existingData.months === "object") {
+    const clearedMonths: HabitsData["months"] = {};
+
+    Object.keys(existingData.months).forEach((monthKey) => {
+      clearedMonths[monthKey] = {
+        habits: [],
+        log: {}
+      };
+    });
+
+    return {
+      months: clearedMonths,
+      sideQuests: [],
+      manMilestones: []
+    };
+  }
+
+  const now = new Date();
+  const currentKey = formatMonthKey(now.getFullYear(), now.getMonth());
+
+  return {
+    months: {
+      [currentKey]: {
+        habits: [],
+        log: {}
+      }
+    },
+    sideQuests: [],
+    manMilestones: []
   };
 }
 
@@ -183,14 +223,7 @@ export function loadHabitsData(): HabitsData {
   }
 
   const now = new Date();
-  const currentKey = formatMonthKey(now.getFullYear(), now.getMonth());
-  const defaults: HabitsData = {
-    months: {
-      [currentKey]: getDefaultMonthData()
-    },
-    sideQuests: [],
-    manMilestones: []
-  };
+  const defaults = createDefaultHabitsData();
 
   saveHabitsData(defaults);
   return defaults;
