@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quest - Tracker</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+
+<body class="bg-gray-900 text-white">
+  <main class="tracker-page">
+    <div id="trackerFlipCard" class="tracker-flip-card">
+      <section class="tracker-face tracker-front">
+        <div class="habit-tracker-shell tracker-fullscreen">
+          <div id="monthHeader" class="month-header">
+            <div class="month-header-left">
+              <button id="prevMonthBtn" class="month-nav-btn" type="button" aria-label="Previous month">
+                &larr;
+              </button>
+              <h3 id="monthLabel" class="text-xl font-semibold"></h3>
+              <button id="nextMonthBtn" class="month-nav-btn" type="button" aria-label="Next month">
+                &rarr;
+              </button>
+            </div>
+            <button id="toggleStatsFlipBtn" class="month-action-btn stats-flip-toggle" type="button">
+              Show Month Stats
+            </button>
+          </div>
+
+          <div id="habitGrid" class="habit-grid-wrapper"></div>
+
+          <div id="habitActions" class="habit-actions">
+            <div class="quest-input-group">
+              <input
+                id="newHabitInput"
+                class="habit-input"
+                type="text"
+                placeholder="Add a quest (max 10)"
+                maxlength="40"
+              >
+              <button id="addHabitBtn" class="bg-blue-500 px-4 py-2" type="button">
+                Add Quest
+              </button>
+              <button id="copyHabitsBtn" class="month-action-btn" type="button">
+                Copy Quests
+              </button>
+              <button id="pasteHabitsBtn" class="month-action-btn" type="button" disabled>
+                Paste Quests
+              </button>
+              <button id="deleteAllHabitsBtn" class="month-action-btn danger-action-btn" type="button" disabled>
+                Delete All Quests
+              </button>
+            </div>
+            <span id="clipboardStatus" class="clipboard-status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="tracker-face tracker-back">
+        <div class="stats-back-shell">
+          <div class="stats-back-head">
+            <div>
+              <h4>Detailed Month Analytics</h4>
+              <p id="statsBackMonth" class="stats-back-month"></p>
+            </div>
+            <button id="toggleStatsBackBtn" class="month-action-btn stats-flip-toggle" type="button">
+              Hide Stats
+            </button>
+          </div>
+
+          <section id="statsPanel" class="stats-panel">
+            <div id="statCounters" class="stat-counters"></div>
+            <div id="progressCharts" class="progress-charts"></div>
+          </section>
+
+          <section id="analyticsBottom" class="analytics-bottom">
+            <article class="analytics-column side-quests-column">
+              <div class="analytics-column-head">
+                <h5>Top Side Quests</h5>
+              </div>
+              <div class="analytics-input-row">
+                <input id="sideQuestInput" class="analytics-input" type="text" maxlength="60" placeholder="Add a side quest">
+                <button id="addSideQuestBtn" class="month-action-btn analytics-add-btn" type="button">Add</button>
+              </div>
+              <ul id="sideQuestList" class="analytics-list"></ul>
+            </article>
+
+            <article class="analytics-column man-growth-column">
+              <div class="analytics-column-head">
+                <h5>How a Boy Becomes a Man</h5>
+              </div>
+              <div class="analytics-input-row">
+                <input id="manMilestoneInput" class="analytics-input" type="text" maxlength="70" placeholder="Add a milestone">
+                <button id="addManMilestoneBtn" class="month-action-btn analytics-add-btn" type="button">Add</button>
+              </div>
+              <ul id="manMilestoneList" class="analytics-list checklist-list"></ul>
+            </article>
+          </section>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div
+    id="deleteMonthModal"
+    class="modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="deleteModalTitle"
+  >
+    <div class="modal-card">
+      <h3 id="deleteModalTitle">Delete all quests for <span id="deleteModalMonthLabel"></span>?</h3>
+      <p>
+        This action permanently deletes quests and tracked progress for this month only.
+        Data in other months will remain unchanged.
+      </p>
+      <div class="modal-actions">
+        <button id="cancelDeleteMonthBtn" class="month-action-btn modal-btn" type="button">Cancel</button>
+        <button id="confirmDeleteMonthBtn" class="month-action-btn modal-btn-danger" type="button">
+          Delete Month Quests
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/ts/habits-page.ts"></script>
+
+</body>
+</html>
