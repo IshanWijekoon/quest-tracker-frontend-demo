@@ -22,9 +22,6 @@ const monthLabel = document.getElementById("monthLabel");
 const habitGrid = document.getElementById("habitGrid");
 const statCounters = document.getElementById("statCounters");
 const progressCharts = document.getElementById("progressCharts");
-const trackerFlipCard = document.getElementById("trackerFlipCard");
-const toggleStatsFlipBtn = document.getElementById("toggleStatsFlipBtn") as HTMLButtonElement | null;
-const toggleStatsBackBtn = document.getElementById("toggleStatsBackBtn") as HTMLButtonElement | null;
 const statsBackMonth = document.getElementById("statsBackMonth");
 const sideQuestInput = document.getElementById("sideQuestInput") as HTMLInputElement | null;
 const addSideQuestBtn = document.getElementById("addSideQuestBtn") as HTMLButtonElement | null;
@@ -48,7 +45,6 @@ const confirmDeleteMonthBtn = document.getElementById("confirmDeleteMonthBtn") a
 
 let data = loadHabitsData();
 let currentView = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-let isStatsFlipped = false;
 
 const CLIPBOARD_STORAGE_KEY = "humanos_habits_month_clipboard_v1";
 const MAX_HABITS = 10;
@@ -487,15 +483,6 @@ function renderStats(year: number, monthIndex: number): void {
   renderManMilestoneList();
 }
 
-function setStatsFlipped(nextState: boolean): void {
-  isStatsFlipped = nextState;
-  if (!trackerFlipCard) {
-    return;
-  }
-
-  trackerFlipCard.classList.toggle("is-flipped", isStatsFlipped);
-}
-
 function persistAndRender(): void {
   saveHabitsData(data);
   render();
@@ -853,6 +840,4 @@ nextMonthBtn?.addEventListener("click", () => {
 });
 
 updateClipboardUi();
-toggleStatsFlipBtn?.addEventListener("click", () => setStatsFlipped(true));
-toggleStatsBackBtn?.addEventListener("click", () => setStatsFlipped(false));
 render();
