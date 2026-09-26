@@ -55,3 +55,15 @@ export type Skill = {
   hours: number;
   projects: number;
 };
+
+export type QuestPriority = "high" | "med" | "low";
+
+export type DeadlineQuest = {
+  id: string;
+  title: string;
+  deadline: string;
+  priority: QuestPriority;
+  done: boolean;
+  notes: string;
+  createdAt: string;
+};

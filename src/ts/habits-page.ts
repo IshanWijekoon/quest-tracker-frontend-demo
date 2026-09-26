@@ -1,4 +1,4 @@
-import { Habit, ManMilestone, SideQuest } from "./types";
+import { Habit, ManMilestone, QuestPriority, SideQuest } from "./types";
 import {
   addHabit,
   calculateStats,
@@ -17,6 +17,18 @@ import {
   setCellState,
   setMonthData
 } from "./habits";
+import {
+  addDeadlineQuest,
+  formatDeadlineLabel,
+  isDueToday,
+  isOverdue,
+  loadDeadlineQuests,
+  removeDeadlineQuest,
+  saveDeadlineQuests,
+  sortDeadlineQuests,
+  toggleDeadlineQuestDone,
+  updateDeadlineQuest
+} from "./deadline-quests";
 
 const monthLabel = document.getElementById("monthLabel");
 const habitGrid = document.getElementById("habitGrid");
@@ -42,12 +54,25 @@ const deleteMonthModal = document.getElementById("deleteMonthModal");
 const deleteModalMonthLabel = document.getElementById("deleteModalMonthLabel");
 const cancelDeleteMonthBtn = document.getElementById("cancelDeleteMonthBtn") as HTMLButtonElement | null;
 const confirmDeleteMonthBtn = document.getElementById("confirmDeleteMonthBtn") as HTMLButtonElement | null;
+const trackerView = document.getElementById("trackerView");
+const deadlinesView = document.getElementById("deadlinesView");
+const switchToDeadlinesBtn = document.getElementById("switchToDeadlinesBtn") as HTMLButtonElement | null;
+const switchToTrackerBtn = document.getElementById("switchToTrackerBtn") as HTMLButtonElement | null;
+const deadlineQuestForm = document.getElementById("deadlineQuestForm") as HTMLFormElement | null;
+const deadlineTitleInput = document.getElementById("deadlineTitleInput") as HTMLInputElement | null;
+const deadlineDateInput = document.getElementById("deadlineDateInput") as HTMLInputElement | null;
+const deadlinePriorityInput = document.getElementById("deadlinePriorityInput") as HTMLSelectElement | null;
+const deadlineNotesInput = document.getElementById("deadlineNotesInput") as HTMLInputElement | null;
+const deadlineQuestList = document.getElementById("deadlineQuestList");
 
 let data = loadHabitsData();
 let currentView = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let deadlineQuests = loadDeadlineQuests();
+type AppView = "tracker" | "deadlines";
+const VIEW_STORAGE_KEY = "humanos_active_view_v1";
 
 const CLIPBOARD_STORAGE_KEY = "humanos_habits_month_clipboard_v1";
-const MAX_HABITS = 10;
+const MAX_HABITS = 20;
 
 type HabitsClipboard = {
   sourceMonthKey: string;
@@ -764,6 +789,229 @@ function handleFreshStart(): void {
   render();
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function priorityLabel(priority: QuestPriority): string {
+  if (priority === "high") return "High";
+  if (priority === "med") return "Med";
+  return "Low";
+}
+
+function getSavedAppView(): AppView {
+  const saved = sessionStorage.getItem(VIEW_STORAGE_KEY);
+  return saved === "deadlines" ? "deadlines" : "tracker";
+}
+
+function showView(view: AppView): void {
+  const isDeadlines = view === "deadlines";
+
+  if (trackerView) {
+    trackerView.classList.toggle("is-active", !isDeadlines);
+    trackerView.hidden = isDeadlines;
+  }
+
+  if (deadlinesView) {
+    deadlinesView.classList.toggle("is-active", isDeadlines);
+    deadlinesView.hidden = !isDeadlines;
+  }
+
+  sessionStorage.setItem(VIEW_STORAGE_KEY, view);
+
+  if (isDeadlines) {
+    renderDeadlineQuests();
+  }
+}
+
+function persistDeadlineQuests(): void {
+  saveDeadlineQuests(deadlineQuests);
+  renderDeadlineQuests();
+}
+
+function renderDeadlineQuests(): void {
+  if (!deadlineQuestList) {
+    return;
+  }
+
+  const sorted = sortDeadlineQuests(deadlineQuests);
+
+  if (sorted.length === 0) {
+    deadlineQuestList.innerHTML = `<li class="deadline-empty">No unavoidable quests yet. Add one with a hard deadline.</li>`;
+    return;
+  }
+
+  deadlineQuestList.innerHTML = sorted
+    .map((quest) => {
+      const overdue = isOverdue(quest);
+      const dueToday = isDueToday(quest);
+      const stateClass = quest.done
+        ? "is-done"
+        : overdue
+          ? "is-overdue"
+          : dueToday
+            ? "is-due-today"
+            : "";
+      const statusText = quest.done
+        ? "Done"
+        : overdue
+          ? "Overdue"
+          : dueToday
+            ? "Due today"
+            : "Upcoming";
+
+      return `
+        <li class="deadline-item ${stateClass}" data-quest-id="${quest.id}">
+          <div class="deadline-item-main">
+            <label class="deadline-check-label">
+              <input
+                type="checkbox"
+                data-action="toggle-deadline-done"
+                data-quest-id="${quest.id}"
+                ${quest.done ? "checked" : ""}
+              >
+              <span class="deadline-title">${escapeHtml(quest.title)}</span>
+            </label>
+            <div class="deadline-meta">
+              <span class="deadline-date">${formatDeadlineLabel(quest.deadline)}</span>
+              <span class="deadline-priority priority-${quest.priority}">${priorityLabel(quest.priority)}</span>
+              <span class="deadline-status">${statusText}</span>
+            </div>
+            ${quest.notes ? `<p class="deadline-notes">${escapeHtml(quest.notes)}</p>` : ""}
+          </div>
+          <div class="deadline-item-actions">
+            <button
+              type="button"
+              class="month-action-btn deadline-edit-btn"
+              data-action="edit-deadline-quest"
+              data-quest-id="${quest.id}"
+            >Edit</button>
+            <button
+              type="button"
+              class="month-action-btn danger-action-btn deadline-remove-btn"
+              data-action="remove-deadline-quest"
+              data-quest-id="${quest.id}"
+              aria-label="Remove quest ${escapeHtml(quest.title)}"
+            >&times;</button>
+          </div>
+        </li>
+      `;
+    })
+    .join("");
+}
+
+function handleAddDeadlineQuest(event: Event): void {
+  event.preventDefault();
+
+  if (!deadlineTitleInput || !deadlineDateInput || !deadlinePriorityInput) {
+    return;
+  }
+
+  const title = deadlineTitleInput.value.trim();
+  const deadline = deadlineDateInput.value;
+  const priority = deadlinePriorityInput.value as QuestPriority;
+  const notes = deadlineNotesInput?.value.trim() ?? "";
+
+  if (!title || !deadline) {
+    return;
+  }
+
+  deadlineQuests = addDeadlineQuest(deadlineQuests, { title, deadline, priority, notes });
+  deadlineTitleInput.value = "";
+  if (deadlineNotesInput) {
+    deadlineNotesInput.value = "";
+  }
+  persistDeadlineQuests();
+  deadlineTitleInput.focus();
+}
+
+function handleEditDeadlineQuest(questId: string): void {
+  const quest = deadlineQuests.find((item) => item.id === questId);
+  if (!quest) {
+    return;
+  }
+
+  const nextTitle = window.prompt("Edit title", quest.title);
+  if (nextTitle === null) {
+    return;
+  }
+
+  const nextDeadline = window.prompt("Edit deadline (YYYY-MM-DD)", quest.deadline);
+  if (nextDeadline === null) {
+    return;
+  }
+
+  const nextPriorityRaw = window.prompt("Edit priority (high / med / low)", quest.priority);
+  if (nextPriorityRaw === null) {
+    return;
+  }
+
+  const nextNotes = window.prompt("Edit notes (optional)", quest.notes);
+  if (nextNotes === null) {
+    return;
+  }
+
+  const normalizedPriority = nextPriorityRaw.trim().toLowerCase() as QuestPriority;
+  if (normalizedPriority !== "high" && normalizedPriority !== "med" && normalizedPriority !== "low") {
+    window.alert("Priority must be high, med, or low.");
+    return;
+  }
+
+  deadlineQuests = updateDeadlineQuest(deadlineQuests, questId, {
+    title: nextTitle,
+    deadline: nextDeadline.trim(),
+    priority: normalizedPriority,
+    notes: nextNotes
+  });
+  persistDeadlineQuests();
+}
+
+function handleDeadlineListClick(event: Event): void {
+  const target = event.target as HTMLElement;
+  const actionEl = target.closest<HTMLElement>("[data-action]");
+  if (!actionEl) {
+    return;
+  }
+
+  const action = actionEl.dataset.action;
+  const questId = actionEl.dataset.questId;
+  if (!questId) {
+    return;
+  }
+
+  if (action === "edit-deadline-quest") {
+    handleEditDeadlineQuest(questId);
+    return;
+  }
+
+  if (action === "remove-deadline-quest") {
+    deadlineQuests = removeDeadlineQuest(deadlineQuests, questId);
+    persistDeadlineQuests();
+  }
+}
+
+function handleDeadlineListChange(event: Event): void {
+  const target = event.target as HTMLElement;
+  const actionEl = target.closest<HTMLElement>("[data-action]");
+  if (!actionEl) {
+    return;
+  }
+
+  const action = actionEl.dataset.action;
+  const questId = actionEl.dataset.questId;
+  if (!questId || action !== "toggle-deadline-done") {
+    return;
+  }
+
+  deadlineQuests = toggleDeadlineQuestDone(deadlineQuests, questId);
+  persistDeadlineQuests();
+}
+
 habitGrid?.addEventListener("click", handleGridClick);
 
 habitGrid?.addEventListener("contextmenu", (event: Event) => {
@@ -839,5 +1087,20 @@ nextMonthBtn?.addEventListener("click", () => {
   render();
 });
 
+switchToDeadlinesBtn?.addEventListener("click", () => showView("deadlines"));
+switchToTrackerBtn?.addEventListener("click", () => showView("tracker"));
+deadlineQuestForm?.addEventListener("submit", handleAddDeadlineQuest);
+deadlineQuestList?.addEventListener("click", handleDeadlineListClick);
+deadlineQuestList?.addEventListener("change", handleDeadlineListChange);
+
+if (deadlineDateInput && !deadlineDateInput.value) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  deadlineDateInput.value = `${year}-${month}-${day}`;
+}
+
 updateClipboardUi();
 render();
+showView(getSavedAppView());

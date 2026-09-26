@@ -11,49 +11,113 @@
 
 <body class="bg-gray-900 text-white">
   <main class="tracker-page">
-    <div class="habit-tracker-shell tracker-fullscreen">
-      <div id="monthHeader" class="month-header">
-        <div class="month-header-left">
-          <button id="prevMonthBtn" class="month-nav-btn" type="button" aria-label="Previous month">
-            &larr;
-          </button>
-          <h3 id="monthLabel" class="text-xl font-semibold"></h3>
-          <button id="nextMonthBtn" class="month-nav-btn" type="button" aria-label="Next month">
-            &rarr;
+    <section id="trackerView" class="app-view is-active" data-view="tracker">
+      <div class="habit-tracker-shell tracker-fullscreen">
+        <div id="monthHeader" class="month-header">
+          <div class="month-header-left">
+            <button id="prevMonthBtn" class="month-nav-btn" type="button" aria-label="Previous month">
+              &larr;
+            </button>
+            <h3 id="monthLabel" class="text-xl font-semibold"></h3>
+            <button id="nextMonthBtn" class="month-nav-btn" type="button" aria-label="Next month">
+              &rarr;
+            </button>
+          </div>
+          <button
+            id="switchToDeadlinesBtn"
+            class="month-action-btn view-switch-btn"
+            type="button"
+            data-switch-to="deadlines"
+          >
+            Deadlines
           </button>
         </div>
+
+        <div id="habitGrid" class="habit-grid-wrapper"></div>
+
+        <div id="habitActions" class="habit-actions">
+          <div class="quest-input-group">
+            <input
+              id="newHabitInput"
+              class="habit-input"
+              type="text"
+              placeholder="Add a quest (max 20)"
+              maxlength="40"
+            >
+            <button id="addHabitBtn" class="bg-blue-500 px-4 py-2" type="button">
+              Add Quest
+            </button>
+            <button id="copyHabitsBtn" class="month-action-btn" type="button">
+              Copy Quests
+            </button>
+            <button id="pasteHabitsBtn" class="month-action-btn" type="button" disabled>
+              Paste Quests
+            </button>
+            <button id="deleteAllHabitsBtn" class="month-action-btn danger-action-btn" type="button" disabled>
+              Delete All Quests
+            </button>
+            <button id="freshStartBtn" class="month-action-btn danger-action-btn" type="button">
+              Fresh Start
+            </button>
+          </div>
+          <span id="clipboardStatus" class="clipboard-status" aria-live="polite"></span>
+        </div>
       </div>
+    </section>
 
-      <div id="habitGrid" class="habit-grid-wrapper"></div>
-
-      <div id="habitActions" class="habit-actions">
-        <div class="quest-input-group">
-          <input
-            id="newHabitInput"
-            class="habit-input"
-            type="text"
-            placeholder="Add a quest (max 10)"
-            maxlength="40"
+    <section id="deadlinesView" class="app-view" data-view="deadlines" hidden>
+      <div class="habit-tracker-shell tracker-fullscreen deadlines-shell">
+        <div class="month-header">
+          <div class="month-header-left">
+            <h3 class="text-xl font-semibold">Unavoidable Quests</h3>
+          </div>
+          <button
+            id="switchToTrackerBtn"
+            class="month-action-btn view-switch-btn"
+            type="button"
+            data-switch-to="tracker"
           >
-          <button id="addHabitBtn" class="bg-blue-500 px-4 py-2" type="button">
+            Tracker
+          </button>
+        </div>
+
+        <form id="deadlineQuestForm" class="deadline-form" autocomplete="off">
+          <input
+            id="deadlineTitleInput"
+            class="habit-input deadline-title-input"
+            type="text"
+            placeholder="Quest title"
+            maxlength="80"
+            required
+          >
+          <input
+            id="deadlineDateInput"
+            class="habit-input deadline-date-input"
+            type="date"
+            required
+          >
+          <select id="deadlinePriorityInput" class="habit-input deadline-priority-input" required>
+            <option value="high">High</option>
+            <option value="med" selected>Med</option>
+            <option value="low">Low</option>
+          </select>
+          <input
+            id="deadlineNotesInput"
+            class="habit-input deadline-notes-input"
+            type="text"
+            placeholder="Notes (optional)"
+            maxlength="160"
+          >
+          <button id="addDeadlineQuestBtn" class="bg-blue-500 px-4 py-2" type="submit">
             Add Quest
           </button>
-          <button id="copyHabitsBtn" class="month-action-btn" type="button">
-            Copy Quests
-          </button>
-          <button id="pasteHabitsBtn" class="month-action-btn" type="button" disabled>
-            Paste Quests
-          </button>
-          <button id="deleteAllHabitsBtn" class="month-action-btn danger-action-btn" type="button" disabled>
-            Delete All Quests
-          </button>
-          <button id="freshStartBtn" class="month-action-btn danger-action-btn" type="button">
-            Fresh Start
-          </button>
+        </form>
+
+        <div class="deadline-list-shell">
+          <ul id="deadlineQuestList" class="deadline-list" aria-live="polite"></ul>
         </div>
-        <span id="clipboardStatus" class="clipboard-status" aria-live="polite"></span>
       </div>
-    </div>
+    </section>
   </main>
 
   <div

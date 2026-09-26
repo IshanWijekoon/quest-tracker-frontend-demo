@@ -3,7 +3,7 @@ import { CellState, Habit, HabitLog, MonthData, HabitsData } from "./types";
 const STORAGE_KEY = "humanos_habits_v3";
 const LEGACY_V2_KEY = "humanos_habits_v2";
 const LEGACY_V1_KEY = "humanos_habits";
-const MAX_HABITS = 10;
+const MAX_HABITS = 20;
 
 const HABIT_COLORS = [
   "#f9d66d",
