@@ -126,7 +126,7 @@ function migrateFromV2(): HabitsData | null {
   const habits: Habit[] = v2.habits.slice(0, MAX_HABITS).map((h, i) => ({
     id: h.id,
     name: h.name?.trim() || `Habit ${i + 1}`,
-    color: h.color || HABIT_COLORS[i % HABIT_COLORS.length]
+    color: h.color || getColorByIndex(i)
   }));
 
   const months: Record<string, MonthData> = {};
@@ -175,7 +175,7 @@ function migrateFromV1(): HabitsData | null {
   const habits: Habit[] = legacy.slice(0, MAX_HABITS).map((h, i) => ({
     id: h.id,
     name: h.name,
-    color: HABIT_COLORS[i % HABIT_COLORS.length]
+    color: getColorByIndex(i)
   }));
 
   const now = new Date();
@@ -382,7 +382,7 @@ export function clearMonthHabits(data: HabitsData, year: number, monthIndex: num
 }
 
 export function getColorByIndex(index: number): string {
-  return HABIT_COLORS[index % HABIT_COLORS.length];
+  return HABIT_COLORS[index % HABIT_COLORS.length] ?? "#6db6ff";
 }
 
 export function calculateStats(monthData: MonthData, year: number, monthIndex: number): MonthStats {
@@ -404,7 +404,7 @@ export function calculateStats(monthData: MonthData, year: number, monthIndex: n
   for (let day = 1; day <= daysInMonth; day += 1) {
     const dateKey = formatDateKey(year, monthIndex, day);
     const weekIndex = Math.floor((day - 1) / 7);
-    weeklyPossible[weekIndex] += habitCount;
+    weeklyPossible[weekIndex] = (weeklyPossible[weekIndex] ?? 0) + habitCount;
 
     monthData.habits.forEach((habit) => {
       const val = monthData.log[dateKey]?.[habit.id];
@@ -414,7 +414,7 @@ export function calculateStats(monthData: MonthData, year: number, monthIndex: n
       }
 
       currentMonthCompleted += 1;
-      weeklyCompleted[weekIndex] += 1;
+      weeklyCompleted[weekIndex] = (weeklyCompleted[weekIndex] ?? 0) + 1;
 
       if (dateKey === todayKey) {
         todayCompleted += 1;
