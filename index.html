@@ -10,7 +10,8 @@
 </head>
 
 <body class="bg-gray-900 text-white">
-  <main class="tracker-page">
+  <!-- ========== LEGACY HABIT TRACKER ========== -->
+  <main id="legacyApp" class="tracker-page" hidden>
     <section id="trackerView" class="app-view is-active" data-view="tracker">
       <div class="habit-tracker-shell tracker-fullscreen">
         <div id="monthHeader" class="month-header">
@@ -23,14 +24,19 @@
               &rarr;
             </button>
           </div>
-          <button
-            id="switchToDeadlinesBtn"
-            class="month-action-btn view-switch-btn"
-            type="button"
-            data-switch-to="deadlines"
-          >
-            Deadlines
-          </button>
+          <div class="month-header-actions">
+            <button id="upgradeToPlannerBtn" class="month-action-btn view-switch-btn" type="button">
+              Open Planner
+            </button>
+            <button
+              id="switchToDeadlinesBtn"
+              class="month-action-btn view-switch-btn"
+              type="button"
+              data-switch-to="deadlines"
+            >
+              Deadlines
+            </button>
+          </div>
         </div>
 
         <div id="habitGrid" class="habit-grid-wrapper"></div>
@@ -120,6 +126,197 @@
     </section>
   </main>
 
+  <!-- ========== PLANNER APP ========== -->
+  <div id="plannerApp" class="planner-app" hidden>
+    <header class="planner-topbar">
+      <div class="planner-brand">
+        <strong>humanOS</strong>
+        <span class="planner-brand-sub">Planner</span>
+      </div>
+      <nav class="planner-nav" aria-label="Main">
+        <button type="button" class="planner-nav-btn is-active" data-nav="today">Today</button>
+        <button type="button" class="planner-nav-btn" data-nav="calendar">Calendar</button>
+        <button type="button" class="planner-nav-btn" data-nav="goals">Goals</button>
+        <button type="button" class="planner-nav-btn" data-nav="templates">Templates</button>
+        <button type="button" class="planner-nav-btn" data-nav="reviews">Reviews</button>
+        <button type="button" class="planner-nav-btn" data-nav="stats">Stats</button>
+        <button type="button" class="planner-nav-btn" data-nav="deadlines">Deadlines</button>
+        <button type="button" class="planner-nav-btn" data-nav="settings">Settings</button>
+      </nav>
+    </header>
+
+    <div id="reminderBanners" class="reminder-banners" aria-live="polite"></div>
+    <div id="catchUpPanel" class="catch-up-panel" hidden></div>
+
+    <main class="planner-main">
+      <!-- TODAY -->
+      <section id="view-today" class="planner-view is-active" data-view="today">
+        <div class="planner-panel">
+          <div class="today-header">
+            <div>
+              <h2 id="todayTitle" class="planner-heading">Today</h2>
+              <p id="decadeWhy" class="decade-why"></p>
+            </div>
+            <div class="today-header-actions">
+              <label class="rest-day-toggle">
+                <input type="checkbox" id="restDayToggle">
+                Rest day
+              </label>
+              <input type="date" id="todayDatePicker" class="habit-input date-picker-input" aria-label="Select date">
+            </div>
+          </div>
+
+          <div id="neverMissWarning" class="never-miss-warning" hidden>
+            Yesterday was missed — protect today. Never miss twice.
+          </div>
+
+          <div id="streakBar" class="streak-bar"></div>
+
+          <form id="quickAddForm" class="quick-add-form" autocomplete="off">
+            <input id="quickAddTitle" class="habit-input" type="text" placeholder="Add a task…" maxlength="120" required>
+            <input id="quickAddDate" class="habit-input date-picker-input" type="date" required>
+            <select id="quickAddGoal" class="habit-input" aria-label="Month goal">
+              <option value="">No month goal (unlinked)</option>
+            </select>
+            <button class="bg-blue-500 px-4 py-2" type="submit">Add</button>
+          </form>
+
+          <ul id="taskList" class="task-list" aria-live="polite"></ul>
+        </div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section id="view-calendar" class="planner-view" data-view="calendar" hidden>
+        <div class="planner-panel">
+          <div class="month-header">
+            <div class="month-header-left">
+              <button id="calPrevBtn" class="month-nav-btn" type="button" aria-label="Previous month">&larr;</button>
+              <h2 id="calMonthLabel" class="planner-heading"></h2>
+              <button id="calNextBtn" class="month-nav-btn" type="button" aria-label="Next month">&rarr;</button>
+            </div>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div id="calendarDayDetail" class="calendar-day-detail"></div>
+        </div>
+      </section>
+
+      <!-- GOALS -->
+      <section id="view-goals" class="planner-view" data-view="goals" hidden>
+        <div class="planner-panel">
+          <div class="goals-toolbar">
+            <h2 class="planner-heading">Goals</h2>
+            <button id="startWizardBtn" class="bg-blue-500 px-4 py-2" type="button">10-year setup</button>
+          </div>
+          <div id="goalsTree" class="goals-tree"></div>
+          <div id="goalDetail" class="goal-detail" hidden></div>
+          <div id="goalWizard" class="goal-wizard" hidden></div>
+        </div>
+      </section>
+
+      <!-- TEMPLATES -->
+      <section id="view-templates" class="planner-view" data-view="templates" hidden>
+        <div class="planner-panel">
+          <h2 class="planner-heading">Templates</h2>
+          <form id="templateForm" class="template-form" autocomplete="off">
+            <input id="tmplTitle" class="habit-input" type="text" placeholder="Template title" maxlength="80" required>
+            <select id="tmplRecurrence" class="habit-input">
+              <option value="daily">Daily</option>
+              <option value="weekdays">Weekdays</option>
+              <option value="every_n">Every N days</option>
+            </select>
+            <input id="tmplEveryN" class="habit-input" type="number" min="1" max="30" value="2" hidden>
+            <input id="tmplMinutes" class="habit-input" type="number" min="0" max="600" placeholder="Minutes">
+            <input id="tmplMinimum" class="habit-input" type="text" placeholder="Minimum version" maxlength="80">
+            <select id="tmplGoal" class="habit-input">
+              <option value="">No month goal</option>
+            </select>
+            <button class="bg-blue-500 px-4 py-2" type="submit">Add template</button>
+          </form>
+          <ul id="templateList" class="template-list"></ul>
+        </div>
+      </section>
+
+      <!-- REVIEWS -->
+      <section id="view-reviews" class="planner-view" data-view="reviews" hidden>
+        <div class="planner-panel">
+          <h2 class="planner-heading">Reviews</h2>
+          <div class="reviews-toolbar">
+            <button id="startWeeklyReviewBtn" class="month-action-btn" type="button">Weekly review</button>
+            <button id="startMonthlyReviewBtn" class="month-action-btn" type="button">Monthly review</button>
+            <button id="startQuarterlyReviewBtn" class="month-action-btn" type="button">Quarterly review</button>
+            <button id="startAnnualReviewBtn" class="month-action-btn" type="button">Annual review</button>
+          </div>
+          <div id="reviewForm" class="review-form" hidden></div>
+          <ul id="reviewHistory" class="review-history"></ul>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <section id="view-stats" class="planner-view" data-view="stats" hidden>
+        <div class="planner-panel">
+          <h2 class="planner-heading">Stats</h2>
+          <div id="statsSummary" class="stats-summary"></div>
+          <h3 class="planner-subheading">Completion heatmap</h3>
+          <div id="heatmap" class="heatmap"></div>
+          <h3 class="planner-subheading">Skip reasons</h3>
+          <div id="skipAnalytics" class="skip-analytics"></div>
+          <h3 class="planner-subheading">Energy vs completion</h3>
+          <div id="energyAnalytics" class="energy-analytics"></div>
+        </div>
+      </section>
+
+      <!-- DEADLINES (planner copy) -->
+      <section id="view-deadlines" class="planner-view" data-view="deadlines" hidden>
+        <div class="planner-panel">
+          <h2 class="planner-heading">Unavoidable Quests</h2>
+          <form id="plannerDeadlineForm" class="deadline-form" autocomplete="off">
+            <input id="pDeadlineTitle" class="habit-input" type="text" placeholder="Quest title" maxlength="80" required>
+            <input id="pDeadlineDate" class="habit-input" type="date" required>
+            <select id="pDeadlinePriority" class="habit-input" required>
+              <option value="high">High</option>
+              <option value="med" selected>Med</option>
+              <option value="low">Low</option>
+            </select>
+            <input id="pDeadlineNotes" class="habit-input" type="text" placeholder="Notes" maxlength="160">
+            <button class="bg-blue-500 px-4 py-2" type="submit">Add</button>
+          </form>
+          <ul id="plannerDeadlineList" class="deadline-list"></ul>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="view-settings" class="planner-view" data-view="settings" hidden>
+        <div class="planner-panel">
+          <h2 class="planner-heading">Settings</h2>
+          <form id="settingsForm" class="settings-form">
+            <label class="settings-row">
+              <span>Week starts on</span>
+              <select id="weekStartsOn" class="habit-input">
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+              </select>
+            </label>
+            <fieldset class="settings-fieldset">
+              <legend>Reminders (in-app while open)</legend>
+              <label class="settings-row"><input type="checkbox" id="remMorning"> Morning <input type="time" id="remMorningTime" class="habit-input"></label>
+              <label class="settings-row"><input type="checkbox" id="remEvening"> Evening check-in <input type="time" id="remEveningTime" class="habit-input"></label>
+              <label class="settings-row"><input type="checkbox" id="remSunday"> Sunday review <input type="time" id="remSundayTime" class="habit-input"></label>
+              <label class="settings-row"><input type="checkbox" id="remMonthEnd"> Month-end planning <input type="time" id="remMonthEndTime" class="habit-input"></label>
+            </fieldset>
+            <button class="bg-blue-500 px-4 py-2" type="submit">Save settings</button>
+          </form>
+          <div class="settings-danger">
+            <h3 class="planner-subheading">Data</h3>
+            <p class="settings-help">Your original quest grid is kept untouched. Rollback only switches the UI back.</p>
+            <button id="rollbackBtn" class="month-action-btn danger-action-btn" type="button">Rollback to legacy tracker</button>
+            <button id="remigrateBtn" class="month-action-btn danger-action-btn" type="button">Reset planner &amp; re-migrate</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Shared modals -->
   <div
     id="deleteMonthModal"
     class="modal-backdrop"
@@ -143,7 +340,11 @@
     </div>
   </div>
 
-  <script type="module" src="/src/ts/habits-page.ts"></script>
+  <div id="plannerModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" id="plannerModalCard"></div>
+  </div>
 
+  <script type="module" src="/src/ts/app.ts"></script>
 </body>
+
 </html>

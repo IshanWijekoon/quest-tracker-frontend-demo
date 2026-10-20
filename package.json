@@ -6,6 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "tsx --test src/ts/migration.test.ts src/ts/tasks.test.ts src/ts/goals.test.ts",
+    "typecheck": "tsc --noEmit",
     "pages:deploy": "npm run build && wrangler pages deploy dist --project-name=quest-tracker",
     "pages:domain": "powershell -ExecutionPolicy Bypass -File scripts/setup-custom-domain.ps1"
   },
@@ -28,6 +30,7 @@
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^8.0.0",
     "wrangler": "^4.107.1"
