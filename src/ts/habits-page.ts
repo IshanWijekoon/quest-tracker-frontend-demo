@@ -1101,6 +1101,25 @@ if (deadlineDateInput && !deadlineDateInput.value) {
   deadlineDateInput.value = `${year}-${month}-${day}`;
 }
 
+const legacyApp = document.getElementById("legacyApp");
+if (legacyApp) {
+  legacyApp.hidden = false;
+}
+
+const upgradeToPlannerBtn = document.getElementById("upgradeToPlannerBtn") as HTMLButtonElement | null;
+upgradeToPlannerBtn?.addEventListener("click", async () => {
+  const { runMigration, switchToPlanner } = await import("./migration");
+  const confirmed = window.confirm(
+    "Open the Planner? Your quest history will be copied into tasks and templates. The original grid stays intact and you can roll back anytime."
+  );
+  if (!confirmed) {
+    return;
+  }
+  runMigration();
+  switchToPlanner();
+  window.location.reload();
+});
+
 updateClipboardUi();
 render();
 showView(getSavedAppView());
