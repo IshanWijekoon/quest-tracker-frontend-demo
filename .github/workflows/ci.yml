@@ -21,7 +21,10 @@ jobs:
         run: npm ci
 
       - name: Type Check
-        run: npx tsc --noEmit
+        run: npm run typecheck
+
+      - name: Unit Tests
+        run: npm test
 
       - name: Build Project
         run: npm run build
